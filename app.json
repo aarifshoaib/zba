@@ -1,4 +1,7 @@
 {
   "name": "zba",
-  "displayName": "zba"
+  "displayName": "zba",
+  "android": {
+    "package": "com.fabs.zba"
+  }
 }

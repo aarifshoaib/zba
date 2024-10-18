@@ -1,118 +1,110 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import { Alert, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import AuthContextProvider from './src/auth/redux/auth.context';
+import AppMain from './AppMain';
+import { StatusBar } from 'expo-status-bar';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { ToastProvider } from 'react-native-toast-notifications'
+import SplashScreen from './src/shared/screens/splash.screen';
+import * as Font from 'expo-font';
+import Entypo from '@expo/vector-icons/Entypo';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFonts } from 'expo-font';
+import { AuthContext } from './src/auth/redux/auth.context';
+import AppSharedContextProvider from './src/shared/redux/app-shared.context';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+// Keep the splash screen visible while we fetch resources
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+export default function App() {
+  const [appIsReady, setAppIsReady] = useState(false);
+  const [mode, setMode] = useState('dark');
+  const authContext = useContext(AuthContext);
+
+  
+  const [fontsLoaded, fontError] = useFonts({
+    'Poppins': require('./assets/fonts/Poppins-Regular.ttf'),
+    'Poppins-Thin': require('./assets/fonts/Poppins-Thin.ttf'),
+    'Poppins-Light': require('./assets/fonts/Poppins-Light.ttf'),
+    'Poppins-Bold': require('./assets/fonts/Poppins-Bold.ttf'),
+    'Poppins-SemiBold': require('./assets/fonts/Poppins-SemiBold.ttf'),
+    'Poppins-Medium': require('./assets/fonts/Poppins-Medium.ttf'),
+    'Poppins-Regular': require('./assets/fonts/Poppins-Regular.ttf'),
+    'AdportsBold': require('./assets/fonts/ADPortsGroup-Bold.otf'),
+    'AdportsRegular': require('./assets/fonts/ADPortsGroup-Regular.otf'),
+    'AdportsThin': require('./assets/fonts/ADPortsGroup-Light.otf'),
+
+  });
+
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Pre-load fonts, make any API calls you need to do here
+        await Font.loadAsync(Entypo.font);
+        // Artificially delay for two seconds to simulate a slow loading
+        // experience. Please remove this if you copy and paste the code!
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        // Tell the application to render
+        setTimeout(() => {
+          setAppIsReady(true);
+          setMode('dark');
+        }, 3000);
+      }
+    }
+
+    prepare();
+  }, [appIsReady]);
+
+  useEffect(() => {
+    if (authContext.user != null) {
+      setMode('light');
+    }
+  }, [authContext.user])
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      
+    }
+  }, [appIsReady]);
+
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <AuthContextProvider>
+      <ToastProvider
+        successColor="#78B16A"
+        dangerColor="#BF5858"
+        swipeEnabled={true}
+        warningColor="#D99766"
+        placement="top"
+        duration={4000}
+        animationType="slide-in"
+      >
+        <AppSharedContextProvider>
+          <NavigationContainer>
+            <GestureHandlerRootView style={{ flex: 1, }}>
+              <BottomSheetModalProvider>
+                <StatusBar style={(mode) == 'dark' ? 'light' : 'dark'} />
+                {!appIsReady && <SplashScreen onLayoutRootView={onLayoutRootView} />}
+                {fontsLoaded && appIsReady && <AppMain />}
+              </BottomSheetModalProvider>
+            </GestureHandlerRootView>
+          </NavigationContainer>
+        </AppSharedContextProvider>
+      </ToastProvider>
+    </AuthContextProvider >
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+
   },
 });
-
-export default App;
